@@ -1,0 +1,26 @@
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::829241815848:role/my-first-site-deploy
+          aws-region: us-east-1
+
+      - name: Sync site to S3
+        run: aws s3 sync . s3://my-first-site-829241815848 --exclude ".git/*" --exclude ".github/*" --delete
+
+      - name: Invalidate CloudFront cache
+        run: aws cloudfront create-invalidation --distribution-id E82T8C25UZGQR --paths "/*"
